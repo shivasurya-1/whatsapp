@@ -43,58 +43,58 @@ app.post('/', (req, res) => {
   - WHATSAPP_PHONE_NUMBER_ID  (the phone number ID from your WhatsApp business account)
 */
 app.post('/send', async (req, res) => {
-  const { numbers, to, message } = req.body;
+  const { numbers, to } = req.body || {};
   const recipients = Array.isArray(numbers) ? numbers : (to ? [to] : []);
-  if (!recipients || recipients.length === 0) {
-    return res.status(400).json({ error: 'Missing "to" or "numbers" array in request body.' });
-  }
-  if (!message) {
-    return res.status(400).json({ error: 'Missing "message" in request body.' });
+
+  if (!recipients.length) {
+    return res.status(400).json({ error: 'Missing "to" or "numbers".' });
   }
 
   const token = process.env.WHATSAPP_TOKEN;
   const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
 
   if (!token || !phoneId) {
-    // If credentials missing, return helpful error (do not attempt to call API)
-    return res.status(500).json({
-      error: 'WHATSAPP_TOKEN and/or WHATSAPP_PHONE_NUMBER_ID not set in environment. Set them to send real messages.'
-    });
+    return res.status(500).json({ error: 'Missing WhatsApp credentials in environment variables.' });
   }
 
   const results = [];
+
   for (const recipient of recipients) {
-    // Strip leading + if provided
     const toNumber = String(recipient).replace(/^\+/, '');
+
     try {
       const resp = await axios.post(
         `https://graph.facebook.com/v17.0/${phoneId}/messages`,
         {
-          messaging_product: 'whatsapp',
+          messaging_product: "whatsapp",
           to: toNumber,
-          type: 'text',
-          text: { body: message }
+          type: "template",
+          template: {
+            name: "testing1", // 👈 EXACT template name from Meta
+            language: { code: "en_US" }
+          }
         },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: 15000
+            "Content-Type": "application/json"
+          }
         }
       );
-      results.push({ to: recipient, status: 'sent', response: resp.data });
-      console.log(`Message sent to ${toNumber}:`, resp.data);
+
+      results.push({ to: recipient, status: "sent", response: resp.data });
+      console.log("Template sent to", toNumber, resp.data);
+
     } catch (err) {
-      // Normalize error info
       const errInfo = err.response?.data ?? { message: err.message };
-      results.push({ to: recipient, status: 'error', error: errInfo });
-      console.error(`Error sending to ${toNumber}:`, errInfo);
+      results.push({ to: recipient, status: "error", error: errInfo });
+      console.error("Error sending to", toNumber, errInfo);
     }
   }
 
   res.json({ results });
 });
+
 
 // Start the server
 app.listen(port, () => {
