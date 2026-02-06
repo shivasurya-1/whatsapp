@@ -7,6 +7,8 @@ const app = express();
 
 // Middleware to parse JSON bodies
 app.use(express.json());
+app.use('/images', express.static('public/images'));
+
 
 // Set port and verify_token
 const port = process.env.PORT || 3000;
@@ -71,7 +73,20 @@ app.post('/send', async (req, res) => {
           type: "template",
           template: {
             name: templateName, // 👈 EXACT template name from Meta
-            language: { code: "en_US" }
+            language: { code: "en_US" },    
+            components: [
+        {
+          type: "header",
+          parameters: [
+            {
+              type: "image",
+              image: {
+                link: "https://yourwebsite.com/image.jpg"   // 👈 REQUIRED
+              }
+            }
+          ]
+        }
+      ]
           }
         },
         {
