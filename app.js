@@ -126,7 +126,6 @@ app.post('/sendhw', async (req, res) => {
   }
 
   const results = [];
-
   for (const recipient of recipients) {
     const toNumber = String(recipient).replace(/^\+/, '');
 
@@ -138,7 +137,7 @@ app.post('/sendhw', async (req, res) => {
           to: toNumber,
           type: "template",
           template: {
-            name: "event_details_reminder_1", // 👈 EXACT template name from Meta
+            name: "event_details_reminder_2", // 👈 EXACT template name from Meta
             language: { code: "en_US" }
           }
         },
