@@ -108,14 +108,13 @@ app.post('/send', async (req, res) => {
   }
 
   res.json({ results });
-});
+})
 
 app.post('/sendhw', async (req, res) => {
-  const { numbers, to } = req.body || {};
-  const recipients = Array.isArray(numbers) ? numbers : (to ? [to] : []);
+  const { recipients } = req.body || {};
 
-  if (!recipients.length) {
-    return res.status(400).json({ error: 'Missing "to" or "numbers".' });
+  if (!Array.isArray(recipients) || recipients.length === 0) {
+    return res.status(400).json({ error: 'Provide "recipients" array with number, employee, and date.' });
   }
 
   const token = process.env.WHATSAPP_TOKEN;
@@ -126,8 +125,11 @@ app.post('/sendhw', async (req, res) => {
   }
 
   const results = [];
-  for (const recipient of recipients) {
-    const toNumber = String(recipient).replace(/^\+/, '');
+
+  for (const person of recipients) {
+    const toNumber = String(person.number).replace(/^\+/, '');
+    const employee = person.employee || "Employee";
+    const date = person.date || "07-02-2026";
 
     try {
       const resp = await axios.post(
@@ -137,8 +139,17 @@ app.post('/sendhw', async (req, res) => {
           to: toNumber,
           type: "template",
           template: {
-            name: "event_details_reminder_2", // 👈 EXACT template name from Meta
-            language: { code: "en_US" }
+            name: "event_details_reminder_2",
+            language: { code: "en_US" },
+            components: [
+              {
+                type: "body",
+                parameters: [
+                  { type: "text", text: employee }, // {{1}}
+                  { type: "text", text: date }      // {{2}}
+                ]
+              }
+            ]
           }
         },
         {
@@ -149,18 +160,21 @@ app.post('/sendhw', async (req, res) => {
         }
       );
 
-      results.push({ to: recipient, status: "sent", response: resp.data });
-      console.log("Template sent to", toNumber, resp.data);
+      results.push({
+        to: toNumber,
+        status: "sent",
+        messageId: resp.data.messages[0].id
+      });
 
     } catch (err) {
       const errInfo = err.response?.data ?? { message: err.message };
-      results.push({ to: recipient, status: "error", error: errInfo });
-      console.error("Error sending to", toNumber, errInfo);
+      results.push({ to: toNumber, status: "error", error: errInfo });
     }
   }
 
   res.json({ results });
 });
+
 
 
 // Start the server
