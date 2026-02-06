@@ -110,6 +110,59 @@ app.post('/send', async (req, res) => {
   res.json({ results });
 });
 
+app.post('/sendhw', async (req, res) => {
+  const { numbers, to } = req.body || {};
+  const recipients = Array.isArray(numbers) ? numbers : (to ? [to] : []);
+
+  if (!recipients.length) {
+    return res.status(400).json({ error: 'Missing "to" or "numbers".' });
+  }
+
+  const token = process.env.WHATSAPP_TOKEN;
+  const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+  if (!token || !phoneId) {
+    return res.status(500).json({ error: 'Missing WhatsApp credentials in environment variables.' });
+  }
+
+  const results = [];
+
+  for (const recipient of recipients) {
+    const toNumber = String(recipient).replace(/^\+/, '');
+
+    try {
+      const resp = await axios.post(
+        `https://graph.facebook.com/v17.0/${phoneId}/messages`,
+        {
+          messaging_product: "whatsapp",
+          to: toNumber,
+          type: "template",
+          template: {
+            name: "hello_world", // 👈 EXACT template name from Meta
+            language: { code: "en_US" }
+          }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      results.push({ to: recipient, status: "sent", response: resp.data });
+      console.log("Template sent to", toNumber, resp.data);
+
+    } catch (err) {
+      const errInfo = err.response?.data ?? { message: err.message };
+      results.push({ to: recipient, status: "error", error: errInfo });
+      console.error("Error sending to", toNumber, errInfo);
+    }
+  }
+
+  res.json({ results });
+});
+
 
 // Start the server
 app.listen(port, () => {
