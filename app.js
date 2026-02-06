@@ -81,7 +81,7 @@ app.post('/send', async (req, res) => {
             {
               type: "image",
               image: {
-                link: "https://yourwebsite.com/image.jpg"   // 👈 REQUIRED
+                link: "https://whatsapp-1qkf.onrender.com/images/aiml.jpeg"   // 👈 REQUIRED
               }
             }
           ]
