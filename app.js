@@ -61,7 +61,7 @@ app.post('/send', async (req, res) => {
 
   for (const recipient of recipients) {
     const toNumber = String(recipient).replace(/^\+/, '');
-
+ const templateName= process.env.TEMPLATE_NAME;
     try {
       const resp = await axios.post(
         `https://graph.facebook.com/v17.0/${phoneId}/messages`,
@@ -70,7 +70,7 @@ app.post('/send', async (req, res) => {
           to: toNumber,
           type: "template",
           template: {
-            name: "testing1", // 👈 EXACT template name from Meta
+            name: templateName, // 👈 EXACT template name from Meta
             language: { code: "en_US" }
           }
         },
