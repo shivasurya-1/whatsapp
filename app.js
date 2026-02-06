@@ -138,7 +138,7 @@ app.post('/sendhw', async (req, res) => {
           to: toNumber,
           type: "template",
           template: {
-            name: "hello_world", // 👈 EXACT template name from Meta
+            name: "event_details_reminder_1", // 👈 EXACT template name from Meta
             language: { code: "en_US" }
           }
         },
